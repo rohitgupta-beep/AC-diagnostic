@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AC Pressure Diagnostic — Spinny Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f0e;
+    --bg2: #141614;
+    --bg3: #1a1d1a;
+    --surface: #1f221f;
+    --surface2: #252825;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8ebe6;
+    --text2: #9aa098;
+    --text3: #606860;
+    --green: #4ade80;
+    --green-dim: #166534;
+    --green-bg: rgba(74,222,128,0.08);
+    --amber: #fbbf24;
+    --amber-dim: #92400e;
+    --amber-bg: rgba(251,191,36,0.08);
+    --red: #f87171;
+    --red-dim: #7f1d1d;
+    --red-bg: rgba(248,113,113,0.08);
+    --blue: #60a5fa;
+    --blue-bg: rgba(96,165,250,0.08);
+    --accent: #4ade80;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 clamp(16px, 5vw, 48px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    background: rgba(13,15,14,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .header-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: clamp(24px, 5vw, 56px) clamp(16px, 5vw, 32px) 80px;
+  }
+
+  /* HERO */
+  .hero {
+    margin-bottom: 40px;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(26px, 5vw, 40px);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .hero p {
+    font-size: 15px;
+    color: var(--text2);
+    max-width: 520px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 16px;
+  }
+
+  /* TOGGLE PILLS */
+  .toggle-group {
+    display: flex;
+    gap: 6px;
+    background: var(--bg3);
+    padding: 4px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    width: fit-content;
+  }
+  .toggle-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 20px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .toggle-btn.active {
+    background: var(--accent);
+    color: #0d0f0e;
+  }
+
+  /* INPUTS ROW */
+  .inputs-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 560px) {
+    .inputs-row { grid-template-columns: 1fr; }
+  }
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .input-group label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: 'DM Mono', monospace;
+  }
+  .input-wrap {
+    position: relative;
+  }
+  .input-wrap input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 12px 44px 12px 14px;
+    font-size: 20px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+  }
+  .input-wrap input::-webkit-inner-spin-button,
+  .input-wrap input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .input-wrap input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.1);
+  }
+  .input-wrap .unit-tag {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    pointer-events: none;
+  }
+
+  /* CONTROLS ROW */
+  .controls-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .controls-label {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  /* RUN BUTTON */
+  .run-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--accent);
+    color: #0d0f0e;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .run-btn:hover { background: #86efac; transform: translateY(-1px); }
+  .run-btn:active { transform: translateY(0); }
+  .run-btn svg { width: 16px; height: 16px; }
+
+  /* PRESSURE BARS */
+  .bars-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 480px) { .bars-grid { grid-template-columns: 1fr; } }
+  .bar-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .bar-card-label {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+  }
+  .bar-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    position: relative;
+    overflow: visible;
+    margin-bottom: 8px;
+  }
+  .bar-leak-zone {
+    position: absolute;
+    height: 100%;
+    background: rgba(248,113,113,0.3);
+    border-radius: 3px 0 0 3px;
+    left: 0;
+  }
+  .bar-ok-zone {
+    position: absolute;
+    height: 100%;
+    border-radius: 3px;
+  }
+  .bar-pin {
+    position: absolute;
+    width: 2px;
+    height: 14px;
+    top: -4px;
+    border-radius: 1px;
+    transition: left 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+  .bar-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* RESULT CARD */
+  .result-card {
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+    border: 1px solid;
+    display: none;
+    animation: slideUp 0.3s ease;
+  }
+  .result-card.show { display: block; }
+  @keyframes slideUp {
+    from { opacity:0; transform: translateY(8px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .result-card.ok     { background: var(--green-bg); border-color: rgba(74,222,128,0.2); }
+  .result-card.warn   { background: var(--amber-bg); border-color: rgba(251,191,36,0.2); }
+  .result-card.danger { background: var(--red-bg);   border-color: rgba(248,113,113,0.2); }
+  .result-card.info   { background: var(--blue-bg);  border-color: rgba(96,165,250,0.2); }
+
+  .result-icon-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .result-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .ok .result-icon     { background: rgba(74,222,128,0.15); }
+  .warn .result-icon   { background: rgba(251,191,36,0.15); }
+  .danger .result-icon { background: rgba(248,113,113,0.15); }
+  .info .result-icon   { background: rgba(96,165,250,0.15); }
+
+  .result-body { flex: 1; }
+  .result-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .ok .result-title     { color: var(--green); }
+  .warn .result-title   { color: var(--amber); }
+  .danger .result-title { color: var(--red); }
+  .info .result-title   { color: var(--blue); }
+
+  .result-desc {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin-bottom: 12px;
+  }
+  .result-target {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    border-left: 3px solid;
+    display: none;
+  }
+  .ok .result-target     { border-color: var(--green); }
+  .warn .result-target   { border-color: var(--amber); }
+  .danger .result-target { border-color: var(--red); }
+
+  .result-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid;
+  }
+  .ok .result-action     { color: var(--green); border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.08); }
+  .warn .result-action   { color: var(--amber); border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); }
+  .danger .result-action { color: var(--red);   border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.08); }
+
+  /* LEGEND */
+  .bar-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* REFERENCE TABLE */
+  .ref-section { margin-top: 32px; }
+  .ref-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ref-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    min-width: 480px;
+  }
+  th {
+    text-align: left;
+    color: var(--text3);
+    font-weight: 400;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 8px 12px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+  }
+  td.target { color: var(--text); font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* FOOTER */
+  footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ERROR SHAKE */
+  .shake { animation: shake 0.35s ease; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-6px)}
+    75%{transform:translateX(6px)}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-dot"></span>
+    AC DIAGNOSTIC
+  </div>
+  <div class="header-tag">WORKSHOP TOOL v1.0</div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="hero-eyebrow">Refrigerant Pressure Analysis</div>
+    <h1>AC System<br>Pressure Diagnostic</h1>
+    <p>Enter ambient temperature and gauge readings to instantly diagnose AC system health and get a recommended action.</p>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="card">
+    <div class="card-title">Configuration</div>
+    <div class="controls-row">
+      <span class="controls-label">Fuel type</span>
+      <div class="toggle-group" id="fuel-group">
+        <button class="toggle-btn active" onclick="setFuel('petrol')">Petrol</button>
+        <button class="toggle-btn" onclick="setFuel('diesel')">Diesel</button>
+      </div>
+      <span class="controls-label" style="margin-left:8px;">Pressure unit</span>
+      <div class="toggle-group" id="unit-group">
+        <button class="toggle-btn active" onclick="setUnit('kpa')">kPa</button>
+        <button class="toggle-btn" onclick="setUnit('psi')">psi</button>
+      </div>
+    </div>
+
+    <div class="inputs-row">
+      <div class="input-group">
+        <label>Ambient Temp</label>
+        <div class="input-wrap">
+          <input type="number" id="amb" placeholder="35" min="25" max="45" />
+          <span class="unit-tag">°C</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>High Pressure (HP)</label>
+        <div class="input-wrap">
+          <input type="number" id="hp" placeholder="1400" min="0" />
+          <span class="unit-tag" id="hp-unit">kPa</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Low Pressure (LP)</label>
+        <div class="input-wrap">
+          <input type="number" id="lp" placeholder="300" min="0" />
+          <span class="unit-tag" id="lp-unit">kPa</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="run-btn" onclick="diagnose()">
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Run Diagnostic
+    </button>
+  </div>
+
+  <!-- PRESSURE BARS -->
+  <div id="vis-section" style="display:none;">
+    <div class="bar-legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:rgba(248,113,113,0.4);"></div>Leak zone (&lt;33% of lower limit)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#4ade80;opacity:0.6;"></div>Acceptable range</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#888;"></div>Out of range (low/high)</div>
+    </div>
+    <div class="bars-grid">
+      <div class="bar-card">
+        <div class="bar-card-label">HIGH PRESSURE LINE</div>
+        <div class="bar-track">
+          <div class="bar-leak-zone" id="hp-leak"></div>
+          <div class="bar-ok-zone"   id="hp-ok"></div>
+          <div class="bar-pin"       id="hp-pin"></div>
+        </div>
+        <div class="bar-labels">
+          <span id="hp-leak-lbl" style="color:#f87171;"></span>
+          <span id="hp-min-lbl"></span>
+          <span id="hp-max-lbl"></span>
+        </div>
+        <div class="bar-value" id="hp-val"></div>
+      </div>
+      <div class="bar-card">
+        <div class="bar-card-label">LOW PRESSURE LINE</div>
+        <div class="bar-track">
+          <div class="bar-leak-zone" id="lp-leak"></div>
+          <div class="bar-ok-zone"   id="lp-ok"></div>
+          <div class="bar-pin"       id="lp-pin"></div>
+        </div>
+        <div class="bar-labels">
+          <span id="lp-leak-lbl" style="color:#f87171;"></span>
+          <span id="lp-min-lbl"></span>
+          <span id="lp-max-lbl"></span>
+        </div>
+        <div class="bar-value" id="lp-val"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-card" class="result-card">
+    <div class="result-icon-row">
+      <div class="result-icon" id="result-icon"></div>
+      <div class="result-body">
+        <div class="result-title"  id="result-title"></div>
+        <div class="result-desc"   id="result-desc"></div>
+        <div class="result-target" id="result-target"></div>
+        <span class="result-action" id="result-action"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFERENCE TABLE -->
+  <div class="ref-section">
+    <div class="ref-title">Pressure Reference Chart — <span id="ref-fuel-lbl">Petrol</span> &nbsp;|&nbsp; <span id="ref-unit-lbl">kPa</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Ambient °C</th>
+            <th>HP min</th><th>HP max</th><th>HP target</th>
+            <th>LP min</th><th>LP max</th><th>LP target</th>
+            <th>HP leak (&lt;33%)</th><th>LP leak (&lt;33%)</th>
+          </tr>
+        </thead>
+        <tbody id="ref-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <span>AC Pressure Diagnostic Tool</span>
+    <span>Based on OEM pressure charts — Petrol &amp; Diesel</span>
+  </footer>
+</main>
+
+<script>
+const DATA = {
+  petrol: {
+    25:{hpMin:1100,hpMax:1600,lpMin:200,lpMax:350},
+    30:{hpMin:1200,hpMax:1700,lpMin:200,lpMax:400},
+    35:{hpMin:1300,hpMax:1900,lpMin:250,lpMax:450},
+    40:{hpMin:1500,hpMax:2100,lpMin:250,lpMax:500},
+    45:{hpMin:1700,hpMax:2300,lpMin:300,lpMax:550}
+  },
+  diesel:{
+    25:{hpMin:1200,hpMax:1700,lpMin:200,lpMax:350},
+    30:{hpMin:1300,hpMax:1900,lpMin:200,lpMax:400},
+    35:{hpMin:1500,hpMax:2100,lpMin:250,lpMax:450},
+    40:{hpMin:1700,hpMax:2300,lpMin:250,lpMax:500},
+    45:{hpMin:1900,hpMax:2500,lpMin:300,lpMax:550}
+  }
+};
+
+let fuel='petrol', unit='kpa';
+const KPA_TO_PSI=0.14504;
+function toPsi(k){return Math.round(k*KPA_TO_PSI*10)/10;}
+function toKpa(p){return Math.round(p/KPA_TO_PSI);}
+function fmt(kpa){return unit==='psi'?toPsi(kpa):kpa;}
+function uu(){return unit==='psi'?'psi':'kPa';}
+function mid(a,b){return Math.round((a+b)/2);}
+function leakTh(mn){return Math.round(mn*0.67);}
+
+function interp(temp,key){
+  if(temp<=25)return DATA[fuel][25][key];
+  if(temp>=45)return DATA[fuel][45][key];
+  const lo=Math.floor(temp/5)*5,hi=lo+5,t=(temp-lo)/5;
+  return Math.round(DATA[fuel][lo][key]*(1-t)+DATA[fuel][hi][key]*t);
+}
+
+function setFuel(f){
+  fuel=f;
+  document.querySelectorAll('#fuel-group .toggle-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===f));
+  document.getElementById('ref-fuel-lbl').textContent=f.charAt(0).toUpperCase()+f.slice(1);
+  renderTable(); clearResult();
+}
+function setUnit(un){
+  unit=un;
+  document.querySelectorAll('#unit-group .toggle-btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===un));
+  ['hp-unit','lp-unit'].forEach(id=>document.getElementById(id).textContent=uu());
+  document.getElementById('ref-unit-lbl').textContent=uu();
+  document.getElementById('hp').placeholder=un==='psi'?'203':'1400';
+  document.getElementById('lp').placeholder=un==='psi'?'45':'300';
+  renderTable(); clearResult();
+  document.getElementById('vis-section').style.display='none';
+}
+function clearResult(){
+  document.getElementById('result-card').className='result-card';
+}
+
+function diagnose(){
+  const amb=parseFloat(document.getElementById('amb').value);
+  const hpRaw=parseFloat(document.getElementById('hp').value);
+  const lpRaw=parseFloat(document.getElementById('lp').value);
+
+  if(isNaN(amb)||isNaN(hpRaw)||isNaN(lpRaw)){
+    ['amb','hp','lp'].forEach(id=>{
+      if(isNaN(parseFloat(document.getElementById(id).value))){
+        document.getElementById(id).classList.add('shake');
+        setTimeout(()=>document.getElementById(id).classList.remove('shake'),400);
+      }
+    });
+    showResult('info','Missing values','Please fill in all three fields to run the diagnostic.','','');
+    return;
+  }
+  if(amb<25||amb>45){
+    document.getElementById('amb').classList.add('shake');
+    setTimeout(()=>document.getElementById('amb').classList.remove('shake'),400);
+    showResult('info','Temperature out of range','Ambient temperature must be between 25°C and 45°C as per the OEM pressure chart.','','');
+    return;
+  }
+
+  const hpKpa=unit==='psi'?toKpa(hpRaw):hpRaw;
+  const lpKpa=unit==='psi'?toKpa(lpRaw):lpRaw;
+
+  const hpMin=interp(amb,'hpMin'),hpMax=interp(amb,'hpMax');
+  const lpMin=interp(amb,'lpMin'),lpMax=interp(amb,'lpMax');
+  const hpMid=mid(hpMin,hpMax),lpMid=mid(lpMin,lpMax);
+  const hpLeak=leakTh(hpMin),lpLeak=leakTh(lpMin);
+
+  const hpSevere=hpKpa<hpLeak, lpSevere=lpKpa<lpLeak;
+  const hpLow=hpKpa<hpMin, hpHigh=hpKpa>hpMax;
+  const lpLow=lpKpa<lpMin, lpHigh=lpKpa>lpMax;
+  const hpOk=!hpLow&&!hpHigh, lpOk=!lpLow&&!lpHigh;
+
+  const hpD=fmt(hpKpa),lpD=fmt(lpKpa);
+  const hpMinD=fmt(hpMin),hpMaxD=fmt(hpMax),hpMidD=fmt(hpMid),hpLeakD=fmt(hpLeak);
+  const lpMinD=fmt(lpMin),lpMaxD=fmt(lpMax),lpMidD=fmt(lpMid),lpLeakD=fmt(lpLeak);
+  const u=uu();
+
+  renderBars(hpKpa,lpKpa,hpMin,hpMax,lpMin,lpMax,hpLeak,lpLeak);
+
+  if(hpOk&&lpOk){
+    showResult('ok','System Normal',`Both HP (${hpD} ${u}) and LP (${lpD} ${u}) are within the acceptable range for ${amb}°C. AC system is healthy.`,'','No action required');
+  } else if((hpSevere||lpSevere)&&hpLow&&lpLow){
+    const w=hpSevere&&lpSevere?'Both HP and LP are':hpSevere?'HP is':'LP is';
+    showResult('danger','Refrigerant Leak Suspected',`${w} critically low (below 33% of the lower limit). This strongly indicates a leak — topping up without finding and fixing the leak will not resolve the issue.`,`Inspect for leaks first. After confirmed fix:\nHP target → ~${hpMidD} ${u}  |  LP target → ~${lpMidD} ${u}`,'Leak inspection before any gas top-up');
+  } else if(hpLow&&lpLow){
+    showResult('warn','Gas Top-Up Required',`HP at ${hpD} ${u} and LP at ${lpD} ${u} are both below the acceptable range for ${amb}°C, indicating low refrigerant charge.`,`Top up refrigerant to:\nHP → ~${hpMidD} ${u}  |  LP → ~${lpMidD} ${u}`,'AC gas top-up');
+  } else if(hpLow&&lpHigh){
+    showResult('danger','Compressor Back Pressure',`HP at ${hpD} ${u} (low) with LP at ${lpD} ${u} (high) indicates the compressor is not pumping efficiently. Possible internal valve failure or back pressure issue.`,'','Raise maintenance request');
+  } else if(hpHigh&&lpLow){
+    showResult('warn','Condenser Dirty or Blocked',`HP at ${hpD} ${u} (high) with LP at ${lpD} ${u} (low) indicates a dirty or blocked condenser restricting heat dissipation.`,'','Condenser cleaning + maintenance request');
+  } else if(hpHigh&&lpHigh){
+    showResult('danger','System Overcharged',`HP at ${hpD} ${u} (high) and LP at ${lpD} ${u} (high) indicates excess refrigerant in the system.`,`Release gas gradually to:\nHP → ~${hpMidD} ${u}  |  LP → ~${lpMidD} ${u}`,'Release excess gas to optimum pressure');
+  } else if(hpLow&&lpOk){
+    if(hpSevere){
+      showResult('danger','HP Critically Low — Leak Suspected',`HP at ${hpD} ${u} is below the leak threshold (${hpLeakD} ${u}). LP is normal.`,`Inspect HP line for leaks. After fix:\nHP target → ~${hpMidD} ${u}`,'Leak inspection before gas top-up');
+    } else {
+      showResult('warn','HP Low — Top-Up Required',`HP at ${hpD} ${u} is below the acceptable range (${hpMinD}–${hpMaxD} ${u}). LP is normal.`,`Top up HP to → ~${hpMidD} ${u}`,'Top up gas to ~'+hpMidD+' '+u);
+    }
+  } else if(hpHigh&&lpOk){
+    showResult('warn','HP High — Check Condenser',`HP at ${hpD} ${u} is above the acceptable range (${hpMinD}–${hpMaxD} ${u}). LP is normal.`,`Target HP → ~${hpMidD} ${u} — check condenser airflow`,'Check condenser airflow');
+  } else if(hpOk&&lpLow){
+    if(lpSevere){
+      showResult('danger','LP Critically Low — Leak Suspected',`LP at ${lpD} ${u} is below the leak threshold (${lpLeakD} ${u}). HP is normal.`,`Inspect LP line for leaks. After fix:\nLP target → ~${lpMidD} ${u}`,'Leak inspection before gas top-up');
+    } else {
+      showResult('warn','LP Low — Top-Up Required',`LP at ${lpD} ${u} is below the acceptable range (${lpMinD}–${lpMaxD} ${u}). HP is normal.`,`Top up LP to → ~${lpMidD} ${u}`,'Top up gas to ~'+lpMidD+' '+u);
+    }
+  } else if(hpOk&&lpHigh){
+    showResult('warn','LP High — Inspect Expansion Valve',`LP at ${lpD} ${u} is above the acceptable range (${lpMinD}–${lpMaxD} ${u}). HP is normal.`,`Target LP → ~${lpMidD} ${u} — inspect expansion valve`,'Inspect expansion valve');
+  }
+}
+
+function renderBars(hpKpa,lpKpa,hpMin,hpMax,lpMin,lpMax,hpLeak,lpLeak){
+  document.getElementById('vis-section').style.display='block';
+  function bar(p,val,mn,mx,lk){
+    const top=mx*1.6, span=top;
+    document.getElementById(p+'-leak').style.width=(lk/span*100).toFixed(1)+'%';
+    document.getElementById(p+'-ok').style.left=(mn/span*100).toFixed(1)+'%';
+    document.getElementById(p+'-ok').style.width=((mx-mn)/span*100).toFixed(1)+'%';
+    const severe=val<lk, low=val<mn, high=val>mx;
+    document.getElementById(p+'-ok').style.background=severe?'rgba(74,222,128,0.15)':'rgba(74,222,128,0.45)';
+    const pct=Math.max(0,Math.min(100,val/span*100)).toFixed(1);
+    const pin=document.getElementById(p+'-pin');
+    pin.style.left='calc('+pct+'% - 1px)';
+    pin.style.background=severe?'#f87171':low?'#fbbf24':high?'#fbbf24':'#4ade80';
+    document.getElementById(p+'-leak-lbl').textContent=fmt(lk)+' '+uu();
+    document.getElementById(p+'-min-lbl').textContent=fmt(mn)+' '+uu();
+    document.getElementById(p+'-max-lbl').textContent=fmt(mx)+' '+uu();
+    const el=document.getElementById(p+'-val');
+    const label=severe?'critically low — leak suspected':low?'below range':high?'above range':'within range';
+    el.textContent=fmt(val)+' '+uu()+' — '+label;
+    el.style.color=severe?'#f87171':low?'#fbbf24':high?'#fbbf24':'#4ade80';
+  }
+  bar('hp',hpKpa,hpMin,hpMax,hpLeak);
+  bar('lp',lpKpa,lpMin,lpMax,lpLeak);
+}
+
+const ICONS={ok:'✓',warn:'⚠',danger:'✕',info:'ℹ'};
+function showResult(type,title,desc,target,action){
+  const card=document.getElementById('result-card');
+  card.className='result-card show '+type;
+  document.getElementById('result-icon').textContent=ICONS[type]||'';
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-desc').textContent=desc;
+  const tEl=document.getElementById('result-target');
+  if(target){tEl.style.display='block';tEl.textContent=target;}
+  else{tEl.style.display='none';}
+  const aEl=document.getElementById('result-action');
+  aEl.textContent=action;
+  aEl.style.display=action?'inline-flex':'none';
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function renderTable(){
+  const body=document.getElementById('ref-body');
+  body.innerHTML='';
+  [25,30,35,40,45].forEach(t=>{
+    const d=DATA[fuel][t];
+    const hm=mid(d.hpMin,d.hpMax),lm=mid(d.lpMin,d.lpMax);
+    const hLk=leakTh(d.hpMin),lLk=leakTh(d.lpMin);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${t}°C</td><td>${fmt(d.hpMin)}</td><td>${fmt(d.hpMax)}</td><td class="target">${fmt(hm)}</td><td>${fmt(d.lpMin)}</td><td>${fmt(d.lpMax)}</td><td class="target">${fmt(lm)}</td><td style="color:#f87171">${fmt(hLk)}</td><td style="color:#f87171">${fmt(lLk)}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+renderTable();
+</script>
+</body>
+</html>
