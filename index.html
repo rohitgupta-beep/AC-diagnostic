@@ -329,8 +329,8 @@
         <thead>
           <tr>
             <th>Ambient °C</th>
-            <th>High P. min</th><th>High P. max</th><th>High P. target</th>
-            <th>Low P. min</th><th>Low P. max</th><th>Low P. target</th>
+            <th>High P. min</th><th>High P. max (chart)</th><th>High P. max (+15%)</th><th>High P. target</th>
+            <th>Low P. min</th><th>Low P. max (chart)</th><th>Low P. max (+15%)</th><th>Low P. target</th>
             <th>High P. leak (&lt;33%)</th><th>Low P. leak (&lt;33%)</th>
           </tr>
         </thead>
@@ -432,20 +432,22 @@ function diagnose(){
 
   const hpMin=interp(amb,'hpMin'), hpMax=interp(amb,'hpMax');
   const lpMin=interp(amb,'lpMin'), lpMax=interp(amb,'lpMax');
+  // +15% upper tolerance: min is a hard floor, max gets 15% headroom
+  const hpMaxTol=Math.round(hpMax*1.15), lpMaxTol=Math.round(lpMax*1.15);
   const hpMid=mid(hpMin,hpMax), lpMid=mid(lpMin,lpMax);
   const hpLeak=leakTh(hpMin), lpLeak=leakTh(lpMin);
 
   const hpSevere=hpKpa<hpLeak, lpSevere=lpKpa<lpLeak;
-  const hpLow=hpKpa<hpMin, hpHigh=hpKpa>hpMax;
-  const lpLow=lpKpa<lpMin, lpHigh=lpKpa>lpMax;
+  const hpLow=hpKpa<hpMin,  hpHigh=hpKpa>hpMaxTol;
+  const lpLow=lpKpa<lpMin,  lpHigh=lpKpa>lpMaxTol;
   const hpOk=!hpLow&&!hpHigh, lpOk=!lpLow&&!lpHigh;
 
   const hpD=fmt(hpKpa), lpD=fmt(lpKpa);
-  const hpMinD=fmt(hpMin), hpMaxD=fmt(hpMax), hpMidD=fmt(hpMid), hpLeakD=fmt(hpLeak);
-  const lpMinD=fmt(lpMin), lpMaxD=fmt(lpMax), lpMidD=fmt(lpMid), lpLeakD=fmt(lpLeak);
+  const hpMinD=fmt(hpMin), hpMaxD=fmt(hpMax), hpMaxTolD=fmt(hpMaxTol), hpMidD=fmt(hpMid), hpLeakD=fmt(hpLeak);
+  const lpMinD=fmt(lpMin), lpMaxD=fmt(lpMax), lpMaxTolD=fmt(lpMaxTol), lpMidD=fmt(lpMid), lpLeakD=fmt(lpLeak);
   const u=uu();
 
-  renderBars(hpKpa,lpKpa,hpMin,hpMax,lpMin,lpMax,hpLeak,lpLeak);
+  renderBars(hpKpa,lpKpa,hpMin,hpMaxTol,lpMin,lpMaxTol,hpLeak,lpLeak);
 
   // 1. Both normal
   if(hpOk&&lpOk){
@@ -490,21 +492,21 @@ function diagnose(){
   // 7. High Pressure HIGH, Low Pressure NORMAL — expansion valve
   } else if(hpHigh&&lpOk){
     showResult('warn','Expansion Valve Fault',
-      `High Pressure at ${hpD} ${u} is above the acceptable range (${hpMinD}–${hpMaxD} ${u}). Low Pressure is normal. This pattern indicates an expansion valve fault.`,
+      `High Pressure at ${hpD} ${u} is above the acceptable range (${hpMinD}–${hpMaxTolD} ${u} including +15% tolerance). Low Pressure is normal. This pattern indicates an expansion valve fault.`,
       `Target High Pressure → ~${hpMidD} ${u}`,
       'Expansion valve — repair or replace','mc-hp-high-lp-ok');
 
   // 8. High Pressure NORMAL, Low Pressure HIGH — LP overcharged
   } else if(hpOk&&lpHigh){
     showResult('warn','Low Pressure Line Overcharged',
-      `Low Pressure at ${lpD} ${u} is above the acceptable range (${lpMinD}–${lpMaxD} ${u}). High Pressure is normal. Excess refrigerant on the low pressure side.`,
+      `Low Pressure at ${lpD} ${u} is above the acceptable range (${lpMinD}–${lpMaxTolD} ${u} including +15% tolerance). High Pressure is normal. Excess refrigerant on the low pressure side.`,
       `Release low pressure line to → ~${lpMidD} ${u}`,
       `Release gas — Low Pressure target ~${lpMidD} ${u}`,'mc-hp-ok-lp-high');
 
   // 9. High Pressure LOW, Low Pressure NORMAL — compressor issue
   } else if(hpLow&&lpOk){
     showResult('warn','High Pressure Low — Compressor Issue Suspected',
-      `High Pressure at ${hpD} ${u} is below the acceptable range (${hpMinD}–${hpMaxD} ${u}). Low Pressure is normal. High pressure cannot be directly topped up — this indicates a compressor fault.`,
+      `High Pressure at ${hpD} ${u} is below the acceptable range (${hpMinD}–${hpMaxTolD} ${u} including +15% tolerance). Low Pressure is normal. High pressure cannot be directly topped up — this indicates a compressor fault.`,
       '','Raise maintenance request — compressor inspection','mc-hp-low-lp-ok');
 
   // 10. High Pressure NORMAL, Low Pressure LOW — gas top-up
@@ -516,7 +518,7 @@ function diagnose(){
         'Leak inspection — then top up to target','mc-hp-ok-lp-low');
     } else {
       showResult('warn','Low Pressure Low — Gas Top-Up Required',
-        `Low Pressure at ${lpD} ${u} is below the acceptable range (${lpMinD}–${lpMaxD} ${u}). High Pressure is normal.`,
+        `Low Pressure at ${lpD} ${u} is below the acceptable range (${lpMinD}–${lpMaxTolD} ${u} including +15% tolerance). High Pressure is normal.`,
         `Top up Low Pressure to → ~${lpMidD} ${u}`,
         `Top up gas — Low Pressure target ~${lpMidD} ${u}`,'mc-hp-ok-lp-low');
     }
@@ -572,7 +574,8 @@ function renderTable(){
     const hm=mid(d.hpMin,d.hpMax), lm=mid(d.lpMin,d.lpMax);
     const hLk=leakTh(d.hpMin), lLk=leakTh(d.lpMin);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${t}°C</td><td>${fmt(d.hpMin)}</td><td>${fmt(d.hpMax)}</td><td class="target">${fmt(hm)}</td><td>${fmt(d.lpMin)}</td><td>${fmt(d.lpMax)}</td><td class="target">${fmt(lm)}</td><td class="leakval">${fmt(hLk)}</td><td class="leakval">${fmt(lLk)}</td>`;
+    const hMaxTol=Math.round(d.hpMax*1.15), lMaxTol=Math.round(d.lpMax*1.15);
+    tr.innerHTML=`<td>${t}°C</td><td>${fmt(d.hpMin)}</td><td>${fmt(d.hpMax)}</td><td style="color:#fbbf24">${fmt(hMaxTol)}</td><td class="target">${fmt(hm)}</td><td>${fmt(d.lpMin)}</td><td>${fmt(d.lpMax)}</td><td style="color:#fbbf24">${fmt(lMaxTol)}</td><td class="target">${fmt(lm)}</td><td class="leakval">${fmt(hLk)}</td><td class="leakval">${fmt(lLk)}</td>`;
     body.appendChild(tr);
   });
 }
