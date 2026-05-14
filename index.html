@@ -313,7 +313,7 @@
     </div>
     <div class="mc" id="mc-hp-low-lp-ok">
       <div class="mc-state"><span class="hp">High Pressure LOW</span> · <span class="lp">Low Pressure NORMAL</span></div>
-      <div class="mc-action">Compressor issue suspected — raise maintenance request (high pressure cannot be topped up directly)</div>
+      <div class="mc-action">No action required — monitor the system</div>
     </div>
     <div class="mc" id="mc-hp-ok-lp-low">
       <div class="mc-state"><span class="hp">High Pressure NORMAL</span> · <span class="lp">Low Pressure LOW</span></div>
@@ -503,11 +503,11 @@ function diagnose(){
       `Release low pressure line to → ~${lpMidD} ${u}`,
       `Release gas — Low Pressure target ~${lpMidD} ${u}`,'mc-hp-ok-lp-high');
 
-  // 9. High Pressure LOW, Low Pressure NORMAL — compressor issue
+  // 9. High Pressure LOW, Low Pressure NORMAL — no action required
   } else if(hpLow&&lpOk){
-    showResult('warn','High Pressure Low — Compressor Issue Suspected',
-      `High Pressure at ${hpD} ${u} is below the acceptable range (${hpMinD}–${hpMaxTolD} ${u} including +15% tolerance). Low Pressure is normal. High pressure cannot be directly topped up — this indicates a compressor fault.`,
-      '','Raise maintenance request — compressor inspection','mc-hp-low-lp-ok');
+    showResult('ok','No Action Required',
+      `High Pressure at ${hpD} ${u} is below the chart range (${hpMinD}–${hpMaxTolD} ${u}) but Low Pressure is normal. No action required at this time — monitor the system.`,
+      '','No action required','mc-hp-low-lp-ok');
 
   // 10. High Pressure NORMAL, Low Pressure LOW — gas top-up
   } else if(hpOk&&lpLow){
