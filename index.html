@@ -221,7 +221,7 @@
           <input type="number" id="vent" placeholder="e.g. 10" />
           <span class="unit-tag">°C</span>
         </div>
-        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">Normal: ≥12°C · Leave blank if not measured</span>
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">Flag if &gt;12°C · Leave blank if not measured</span>
       </div>
     </div>
 
@@ -290,7 +290,7 @@
   <div class="matrix-grid">
     <div class="mc" id="mc-ok">
       <div class="mc-state"><span class="hp">High Pressure NORMAL</span> · <span class="lp">Low Pressure NORMAL</span></div>
-      <div class="mc-action">No action required — system is healthy<br><span style="color:#f87171;">If vent temp &lt;12°C: raise maintenance — AC cooling low</span></div>
+      <div class="mc-action">No action required — system is healthy<br><span style="color:#f87171;">If vent temp &gt;12°C: raise maintenance — AC cooling low</span></div>
     </div>
     <div class="mc" id="mc-both-low">
       <div class="mc-state"><span class="hp">High Pressure LOW</span> · <span class="lp">Low Pressure LOW</span></div>
@@ -462,9 +462,9 @@ function diagnose(){
   const ventRaw=document.getElementById('vent').value;
   const ventVal=ventRaw===''?null:parseFloat(ventRaw);
   if(hpOk&&lpOk){
-    if(ventVal!==null && ventVal<12){
+    if(ventVal!==null && ventVal>12){
       showResult('danger','AC Cooling Low — Maintenance Required',
-        `Pressures are normal — High Pressure (${hpD} ${u}) and Low Pressure (${lpD} ${u}) are both within range for ${amb}°C. However, vent temperature at ${ventVal}°C is below 12°C, indicating poor cooling despite normal gas pressure.`,
+        `Pressures are normal — High Pressure (${hpD} ${u}) and Low Pressure (${lpD} ${u}) are both within range for ${amb}°C. However, vent temperature at ${ventVal}°C is above 12°C, indicating the AC is not cooling adequately despite normal gas pressure.`,
         '','Raise maintenance request — AC cooling low','mc-ok');
     } else {
       showResult('ok','AC System Normal',
