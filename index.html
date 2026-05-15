@@ -221,7 +221,7 @@
           <input type="number" id="vent" placeholder="e.g. 10" />
           <span class="unit-tag">°C</span>
         </div>
-        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">Flag if &gt;12°C · Leave blank if not measured</span>
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">Flag if &gt;12°C · Must be measured</span>
       </div>
     </div>
 
@@ -419,14 +419,16 @@ function diagnose(){
   const hpRaw = parseFloat(document.getElementById('hp').value);
   const lpRaw = parseFloat(document.getElementById('lp').value);
 
-  if(isNaN(amb)||isNaN(hpRaw)||isNaN(lpRaw)){
-    ['amb','hp','lp'].forEach(id=>{
+  const ventRawCheck=document.getElementById('vent').value;
+  const ventCheck=ventRawCheck===''?NaN:parseFloat(ventRawCheck);
+  if(isNaN(amb)||isNaN(hpRaw)||isNaN(lpRaw)||isNaN(ventCheck)){
+    ['amb','hp','lp','vent'].forEach(id=>{
       if(isNaN(parseFloat(document.getElementById(id).value))){
         document.getElementById(id).classList.add('shake');
         setTimeout(()=>document.getElementById(id).classList.remove('shake'),400);
       }
     });
-    showResult('info','Missing values','Please fill in all three fields to run the diagnostic.','','',null);
+    showResult('info','Missing values','Please fill in all four fields including vent temperature to run the diagnostic.','','',null);
     return;
   }
   if(amb<25||amb>45){
@@ -459,10 +461,9 @@ function diagnose(){
   renderBars(hpKpa,lpKpa,hpMin,hpMaxTol,lpMin,lpMaxTol,hpLeak,lpLeak);
 
   // 1. Both normal
-  const ventRaw=document.getElementById('vent').value;
-  const ventVal=ventRaw===''?null:parseFloat(ventRaw);
+  const ventVal=parseFloat(document.getElementById('vent').value);
   if(hpOk&&lpOk){
-    if(ventVal!==null && ventVal>12){
+    if(ventVal>12){
       showResult('danger','AC Cooling Low — Maintenance Required',
         `Pressures are normal — High Pressure (${hpD} ${u}) and Low Pressure (${lpD} ${u}) are both within range for ${amb}°C. However, vent temperature at ${ventVal}°C is above 12°C, indicating the AC is not cooling adequately despite normal gas pressure.`,
         '','Raise maintenance request — AC cooling low','mc-ok');
